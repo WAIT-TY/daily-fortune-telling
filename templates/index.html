@@ -1,0 +1,139 @@
+ <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日运势抽签</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        #result-area {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            width: 600px;
+            white-space: pre-wrap;
+            text-align: center;
+        }
+        #draw-button-container {
+            position: relative;
+            cursor: pointer;
+        }
+        #draw-button-container img#qiutong {
+            width: 100px;
+            transition: all 0.3s ease;
+        }
+        #draw-button-container img#qian {
+            width: 50px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(0deg);
+            opacity: 0;
+        }
+
+        @keyframes shake {
+            0% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(5deg);
+            }
+            50% {
+                transform: rotate(-5deg);
+            }
+            75% {
+                transform: rotate(5deg);
+            }
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
+        @keyframes fall {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(var(--fall-x), var(--fall-y)) rotate(var(--fall-rotate));  }
+        }
+
+        .shake-animation {
+            animation: shake 0.5s ease;
+        }
+
+        .fall-animation {
+            animation: fall 0.5s ease forwards;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            display: none;
+        }
+     #image-container{
+        margin-top: 20px;
+         text-align: center
+      }
+       #image-container img {
+          display: block;
+         max-width: 100%;
+         height: auto
+      }
+
+    </style>
+</head>
+<body>
+    <h1>每日运势抽签</h1>
+    <div id="draw-button-container">
+        <img id="qiutong" src="{{ url_for('static', filename='qiutong.png') }}" alt="签筒">
+        <img id="qian" src="{{ url_for('static', filename='qian.png') }}" alt="签">
+        <button id="draw-button">开始抽签</button>
+    </div>
+    <div id="result-area"></div>
+      <div id="image-container"></div>
+    <script>
+        const drawButtonContainer = document.getElementById('draw-button-container');
+        const qiutong = document.getElementById('qiutong');
+        const qian = document.getElementById('qian');
+         const drawButton = document.getElementById('draw-button')
+        const imageContainer = document.getElementById('image-container');
+        const resultArea = document.getElementById('result-area');
+
+        drawButtonContainer.addEventListener('click', async () => {
+            qiutong.classList.add('shake-animation');
+            setTimeout(function() {
+               qiutong.classList.remove('shake-animation');
+                // 计算随机位置
+               const randomSign = Math.random() < 0.5 ? -1 : 1;
+               const randomX = Math.random() * 50 * randomSign;
+               const randomY = -10 + Math.random() * 20;
+                const randomRotate = Math.random() * 360
+               qian.style.setProperty('--fall-x', `${randomX}%`);
+                qian.style.setProperty('--fall-y', `${randomY}%`);
+               qian.style.setProperty('--fall-rotate', `${randomRotate}deg`);
+               qian.classList.add('fall-animation');
+
+                setTimeout(async function() {
+                    qian.classList.remove('fall-animation');
+                    qian.style.opacity=1;
+                     qian.style.transform = `translate(${randomX}%, ${randomY}%) rotate(${randomRotate}deg)`;
+                   const response = await fetch('/draw_gua');
+                    const data = await response.text();
+                    document.getElementById('result-area').textContent = data;
+                    // 获取 result-area 宽度
+                   const resultAreaWidth = resultArea.offsetWidth;
+                    // 根据抽签结果显示不同图片
+                    if (data.includes("下")) {
+                        imageContainer.innerHTML = `<img src="{{ url_for('static', filename='image1.png') }}" alt="图片1" style="width: ${resultAreaWidth}px; height: auto;">`;
+                    } else {
+                        imageContainer.innerHTML = `<img src="{{ url_for('static', filename='image2.png') }}" alt="图片2"  style="width: ${resultAreaWidth}px; height: auto;">`;
+                   }
+             }, 500)
+          }, 500)
+     });
+    </script>
+</body>
+</html>
